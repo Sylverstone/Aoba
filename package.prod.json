@@ -1,0 +1,34 @@
+{
+  "name": "botaccueil",
+  "version": "1.0.0",
+  "description": "Création Bot pour le BDE",
+  "main": "dist/main.js",
+  "type": "module",
+  "scripts": {
+    "dev": "npx tsx watch src/main.ts",
+    "build": "npx rimraf dist && npx tsc",
+    "start": " pnpm build && node ."
+  },
+  "author": "Sylvio PELAGE MAXIME",
+  "license": "ISC",
+  "dependencies": {
+    "@types/mysql": "^2.15.26",
+    "@types/node": "^22.10.5",
+    "discord.js": "^14.17.2",
+    "dotenv": "^16.4.7",
+    "fs": "^0.0.1-security",
+    "mongodb": "^7.0.0",
+    "mysql2": "^3.12.0",
+    "path": "^0.12.7",
+    "readline": "^1.3.0",
+    "rimraf": "^6.0.1",
+    "ts-node": "^10.9.2"
+  },
+
+  "devDependencies": {
+    "nodemon": "^3.1.9",
+    "tsx": "^4.19.2",
+    "typescript": "^5.8.3"
+  }
+
+}
