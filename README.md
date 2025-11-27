@@ -1,1 +1,2 @@
-# Bot-banque-TheCasinoRP
+# Aoba
+TypeScript & MongoDB
