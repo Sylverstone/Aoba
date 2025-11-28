@@ -1,4 +1,4 @@
-import { MessageFlags, TextChannel, ChannelType } from "discord.js";
+import { MessageFlags, TextChannel, ChannelType, ChannelSelectMenuBuilder, ActionRowBuilder, ComponentType, ThreadAutoArchiveDuration } from "discord.js";
 import { CommandType_t } from "../Loaders/LoadCommands.js";
 import { CollectorEndReason } from "../types/types.js";
 import ModelParams from "../Models/ModelParams.js";
@@ -11,7 +11,7 @@ const Commande = {
         await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
         const targetMessage = interaction.targetMessage;
         if (await ModelParams.doMessageAlreadyHaveRedirection(targetMessage.id)) {
-            return interaction.editReply({ content: `Je logs déjà les réactions de ce message dans un salon...` });
+            return interaction.editReply({ content: `**Je logs déjà les réactions de ce message dans un salon...**` });
         }
         const channel = targetMessage.channel;
         if (!(channel instanceof TextChannel))
@@ -19,61 +19,69 @@ const Commande = {
         const th = await channel.threads.create({
             name: `Config - ${interaction.user.displayName}`,
             reason: "Configuration de la commande setup_redirect",
-            type: ChannelType.PrivateThread
+            type: ChannelType.PrivateThread,
+            autoArchiveDuration: ThreadAutoArchiveDuration.OneHour
         });
         await th.members.add(interaction.user.id);
-        await interaction.editReply({ content: `Venez dans le thread (<#${th.id}>) pour continuer la configuration ! :))` });
-        const QuestionMessage = await th.send({ content: `J'envoie un message où quand quelqu'un réagit ?` });
-        const co = th.createMessageCollector({
-            time: 2 * 1000 * 60
+        await interaction.editReply({ content: `Venez dans le thread *(<#${th.id}>)* pour continuer la configuration ! :)` });
+        const validChannelForRedirect = new ChannelSelectMenuBuilder()
+            .setChannelTypes(ChannelType.GuildText)
+            .setCustomId("v")
+            .setPlaceholder("Dans quel salon je dois envoyer les logs ?")
+            .setMaxValues(1)
+            .setMinValues(1);
+        const ar = new ActionRowBuilder()
+            .addComponents(validChannelForRedirect);
+        const QuestionMessage = await th.send({ components: [ar] });
+        const co = th.createMessageComponentCollector({
+            time: 2 * 1000 * 60,
+            componentType: ComponentType.ChannelSelect
         });
-        co.on("collect", async (message) => {
-            console.log(message.content);
-            if (message.content.length < 2)
-                return;
-            const contentParsed = message.content.slice(2, message.content.length - 1);
-            try {
-                const GuildChannel = await message.guild?.channels.fetch(contentParsed);
-                if (!GuildChannel) {
-                    await message.reply({
-                        content: "Je ne trouve pas ce channel sur le serveur"
-                    });
-                    return;
-                }
-                //channel trouvé
-                const params = {
-                    redirectSalonId: GuildChannel.id,
-                    messageId: interaction.targetMessage.id,
-                    guildId: interaction.guildId ?? "",
-                    channelId: interaction.channelId
-                };
-                await bot.collections.params?.insertOne(params);
-                co.stop("success");
-            }
-            catch (err) {
-                await message.reply({
+        co.on("collect", async (channelSelectInteraction) => {
+            const GuildChannel = await channelSelectInteraction.guild?.channels.fetch(channelSelectInteraction.values[0]);
+            if (!GuildChannel) {
+                await channelSelectInteraction.reply({
                     content: "Je ne trouve pas ce channel sur le serveur"
                 });
                 return;
             }
+            //channel trouvé
+            const params = {
+                redirectSalonId: GuildChannel.id,
+                messageId: interaction.targetMessage.id,
+                guildId: interaction.guildId ?? "",
+                channelId: interaction.channelId
+            };
+            await bot.collections.params?.insertOne(params);
+            co.stop("success");
         });
         co.on("end", async (c, reason) => {
             //timestamps en second pour discord
             const ts = Date.now() / 1000;
+            const lastInteraction = c.last();
+            const timeBeforeDelete = 30; //s
             switch (reason) {
                 case CollectorEndReason.LIMIT:
-                    QuestionMessage.edit({ content: `Vous n'avez pas répondu à temps, le thread sera supprimer <t:${Math.round(ts + (2 * 60))}:R>` });
+                    await QuestionMessage.edit({ content: `Vous n'avez pas répondu à temps, le thread sera supprimer <t:${Math.round(ts + timeBeforeDelete)}:R>` });
                     break;
                 case CollectorEndReason.TIME:
-                    QuestionMessage.edit({ content: `Vous n'avez pas répondu à temps, le thread sera supprimer <t:${Math.round(ts + (2 * 60))}:R>` });
+                    await QuestionMessage.edit({ content: `Vous n'avez pas répondu à temps, le thread sera supprimer <t:${Math.round(ts + timeBeforeDelete)}:R>` });
                     break;
                 case "success":
-                    QuestionMessage.edit({ content: `La configuration à réussi !, le thread sera supprimer <t:${Math.round(ts + (2 * 60))}:R>` });
+                    if (!lastInteraction)
+                        await QuestionMessage.edit({ content: `La configuration à réussi !, le thread sera supprimer <t:${Math.round(ts + timeBeforeDelete)}:R>` });
+                    else
+                        await lastInteraction.reply({ content: `La configuration à réussi !, le thread sera supprimer <t:${Math.round(ts + timeBeforeDelete)}:R>` });
                     break;
             }
             setTimeout(async () => {
-                await th.delete();
-            }, 2 * 1000 * 60);
+                try {
+                    await th.delete();
+                }
+                catch (err) {
+                    console.error(err);
+                }
+            }, timeBeforeDelete * 1000);
         });
     },
 };

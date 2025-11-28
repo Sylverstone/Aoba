@@ -4,42 +4,23 @@ import "dotenv/config";
 import { loadUserCommandsOnAllServers } from "./Loaders/LoadCommands.js";
 import loadEvenements from "./Loaders/LoadEvents.js";
 import {collections, connect} from "./Connection/connection.js";
-import Params from "./DBModels/params.js";
 
-const assumeParams = (obj : unknown) : obj is Params => {
-    return true;
-}
 connect().then(async () => {
-
-    // const data : Params = {
-    //     guildId : "didid",
-    //     messageId : "iocoiuh",
-    //     reaction : "react",
-    //     redirectSalonId : "1234"
-    // };
-    //
-    // await collections.params?.insertOne(data);
-
-    // await collections.params?.deleteOne( { reaction : "react"});
-    //
-    // console.log("Connected to the server...");
-    //
-    // const Params = (await collections.params?.find({}).toArray());
-    // if(!assumeParams(Params))
-    //     return;
-    //
-    // console.log(Params);
 
     let bot = new CBot(collections);
 
     bot.once(Events.ClientReady, async () => {
         console.log("Connected");
+
+
         await loadUserCommandsOnAllServers(bot);
         await loadEvenements(bot);
-    })
 
-    bot.on(Events.MessageReactionAdd, () => {
+        bot.user?.setActivity("🥊 RED BLUE 🥊", {
+            type : ActivityType.Watching
+        })
 
+        bot.user?.setStatus("dnd");
     })
 
     await bot.login(process.env.TOKEN);

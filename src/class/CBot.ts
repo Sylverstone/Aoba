@@ -20,6 +20,7 @@ export const isScript_t = (script : unknown) : script is script_t =>
 export class CBot extends Client{
 
     public commands : Collection<string,script_t>;
+    //pas obliger vu que collections est accéssible de partout avec un import mais why not
     public collections : collections_t;
 
     constructor(collections : collections_t){
