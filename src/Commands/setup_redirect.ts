@@ -24,8 +24,9 @@ type CommandData = {
 const Commande : script_t =
     {
         name : "setup_redirect",
-        description : "hello",
-        admin : false,
+        description : "Commande à utiliser directement sur un message. Elle vous permet de dire au bot de logs les réactions envoyé sur ce message.",
+        howToUse : "Cliquez sur un message, rendez-vous dans l'onglet application et selectionnez la commande \`/setup_redirect\`.",
+        admin : true,
 
         typeCommand : CommandType_t.MESSAGE_COMMAND,
 

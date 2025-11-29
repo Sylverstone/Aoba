@@ -15,4 +15,19 @@ export default class ModelParams {
         });
         return messageIdSaved.includes(messageId);
     }
+    /**
+     * Méthode pour supprimer un message des suivies du bot
+     * @param messageId - l'id du message que le bot ne doit plus suivre
+     * @return true si le delete à eu lieu, false sinon, null si il y a eu un problème dans la bdd
+     * */
+    static async deleteMessageFollow(messageId) {
+        try {
+            const Query = { messageId: messageId };
+            const DeleteResult = await collections.params?.deleteMany(Query);
+            return (DeleteResult?.deletedCount ?? 0) > 0;
+        }
+        catch (err) {
+            return null;
+        }
+    }
 }

@@ -12,8 +12,10 @@
 	"author": "Sylvio PELAGE MAXIME",
 	"license": "ISC",
 	"dependencies": {
+		"@napi-rs/canvas": "^0.1.83",
 		"@types/mysql": "^2.15.26",
 		"@types/node": "^22.10.5",
+		"discord-api-types": "^0.38.35",
 		"discord.js": "^14.17.2",
 		"dotenv": "^16.4.7",
 		"fs": "^0.0.1-security",
@@ -22,7 +24,8 @@
 		"path": "^0.12.7",
 		"readline": "^1.3.0",
 		"rimraf": "^6.0.1",
-		"ts-node": "^10.9.2"
+		"ts-node": "^10.9.2",
+		"worker": "^0.4.0"
 	},
 	"devDependencies": {
 		"nodemon": "^3.1.9",

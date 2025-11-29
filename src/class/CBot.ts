@@ -6,6 +6,7 @@ import {
 } from "discord.js"
 import { script_t } from "../config/types.js";
 import { collections_t } from "../Connection/connection";
+import getAllCommands from "../Utils/getAllCommands.js";
 
 
 
@@ -13,7 +14,7 @@ import { collections_t } from "../Connection/connection";
 export const isScript_t = (script : unknown) : script is script_t =>
 {
     return script !== null && typeof script === "object"  && "name" in script && "description" in script
-            && "howToUse" in script && "run" in script && "onlyGuild" in script;
+            && script && "run" in script;
 }
 
 
@@ -39,6 +40,10 @@ export class CBot extends Client{
 
         this.commands = new Collection();
         this.collections = collections;
+
+        getAllCommands().then(commands => {
+            this.commands = commands;
+        })
 
     }
 

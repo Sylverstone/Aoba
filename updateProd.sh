@@ -3,11 +3,12 @@
 #Utiliser quand y'aura une branch prod
 pnpm build
 
-cd ../prod
+current_dir=$(pwd)
+cd ../prod || exit
 git rm -r --cached . 
-rm -rf *
+rm -rf ./*
 #copie les fichiers
-rsync -av --exclude 'node_modules/' --exclude 'src/' --exclude 'README.md' --exclude 'tsconfig.json' --exclude 'pnpm-lock.yaml' --exclude '.gitignore' --exclude 'updateProd.sh' --exclude 'package.json' --exclude '.git/' ../Bot-banque-TheCasinoRP/ ./
+rsync -av --exclude 'node_modules/' --exclude 'src/' --exclude 'README.md' --exclude 'tsconfig.json' --exclude 'pnpm-lock.yaml' --exclude '.gitignore' --exclude 'updateProd.sh' --exclude 'package.json' --exclude '.git/' "$current_dir" ./
 
 
 mv package.prod.json package.json

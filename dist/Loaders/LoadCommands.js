@@ -1,20 +1,10 @@
-import { readdirSync } from "fs";
-import * as path from "path";
 import { REST, Routes } from "discord.js";
-import __dirname from "../dirname.js";
-import { pathToFileURL } from "url";
 import "dotenv/config";
+import CommandBuilder from "../class/CommandBuilder.js";
 export const getFile = async (fileUrl) => {
     const module = await import(fileUrl);
     return module.default;
 };
-export var OptionType_t;
-(function (OptionType_t) {
-    OptionType_t[OptionType_t["BOOL"] = 5] = "BOOL";
-    OptionType_t[OptionType_t["STRING"] = 3] = "STRING";
-    OptionType_t[OptionType_t["INTEGER"] = 4] = "INTEGER";
-    OptionType_t[OptionType_t["USER"] = 6] = "USER";
-})(OptionType_t || (OptionType_t = {}));
 export var CommandType_t;
 (function (CommandType_t) {
     CommandType_t[CommandType_t["USERCOMMAND"] = 2] = "USERCOMMAND";
@@ -22,24 +12,11 @@ export var CommandType_t;
     CommandType_t[CommandType_t["MESSAGE_COMMAND"] = 3] = "MESSAGE_COMMAND";
 })(CommandType_t || (CommandType_t = {}));
 const setupLoad = async (bot, guildIds) => {
-    console.log(guildIds);
-    console.log("guild");
-    const ext = ".js";
-    const listeFileCommands = readdirSync(path.join(__dirname, "Commands"))
-        .filter(file => file.endsWith(ext))
-        .map(file => path.join(__dirname, "Commands", file));
     let Commands = [];
-    for (const file of listeFileCommands) {
-        const fileUrl = pathToFileURL(file).href;
-        const commande = await getFile(fileUrl);
-        bot.commands.set(commande.name, commande);
+    for (const [_, commande] of bot.commands) {
         const desc = commande.typeCommand === CommandType_t.CHAT_INPUT ? commande.description : "";
         //creation de la slash commande
-        let userCommand = {
-            name: commande.name,
-            type: commande.typeCommand,
-            description: desc
-        };
+        let command = new CommandBuilder(commande.name, desc, commande.typeCommand);
         let options = [];
         if (commande.optionInt) {
             for (const option of commande.optionInt) {
@@ -50,6 +27,7 @@ const setupLoad = async (bot, guildIds) => {
                     max_value: option.max_value,
                     min_value: option.min_value,
                     required: option.required,
+                    autocomplete: option.autocomplete,
                     choices: option.choices?.map(c => {
                         return {
                             name: c.name,
@@ -66,6 +44,7 @@ const setupLoad = async (bot, guildIds) => {
                     name: option.name,
                     type: option.type,
                     required: option.required,
+                    autocomplete: option.autocomplete,
                     choices: option.choices?.map(c => {
                         return {
                             name: c.name,
@@ -83,10 +62,11 @@ const setupLoad = async (bot, guildIds) => {
                     required: option.required,
                 });
             }
-        if (commande.admin)
-            userCommand.default_member_permissions = "0";
-        userCommand.options = options;
-        Commands.push(userCommand);
+        if (commande.admin) {
+            command.setDefaultMemberPermission("0");
+        }
+        command.setOptions(options);
+        Commands.push(command);
     }
     if (!(typeof process.env.TOKEN === 'string'))
         return;
@@ -103,7 +83,7 @@ const setupLoad = async (bot, guildIds) => {
             for (const guildId of guildIds) {
                 await rest.put(Routes.applicationGuildCommands(clientId, guildId), { body: Commands });
             }
-            console.log(`Successfully reloaded ${listeFileCommands.length} application (/) SlashCommands.`);
+            console.log(`Successfully reloaded ${bot.commands.size} application (/) SlashCommands.`);
         }
         catch (error) {
             console.error("[ERROR] error while loading SlashCommands\n", error);
@@ -111,11 +91,11 @@ const setupLoad = async (bot, guildIds) => {
         }
     })();
 };
-export const loadUserCommandOnServer = async (bot, guildId) => {
+export const loadCommandsOnServer = async (bot, guildId) => {
     const guildIds = [guildId];
     await setupLoad(bot, guildIds);
 };
-export const loadUserCommandsOnAllServers = async (bot) => {
+export const loadCommandsOnAllServers = async (bot) => {
     await bot.guilds.fetch();
     const guildIds = bot.guilds.cache.map(guild => guild.id);
     await setupLoad(bot, guildIds);

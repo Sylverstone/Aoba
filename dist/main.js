@@ -1,14 +1,14 @@
 import { ActivityType, Events } from "discord.js";
 import { CBot } from "./class/CBot.js";
 import "dotenv/config";
-import { loadUserCommandsOnAllServers } from "./Loaders/LoadCommands.js";
+import { loadCommandsOnAllServers } from "./Loaders/LoadCommands.js";
 import loadEvenements from "./Loaders/LoadEvents.js";
 import { collections, connect } from "./Connection/connection.js";
 connect().then(async () => {
     let bot = new CBot(collections);
     bot.once(Events.ClientReady, async () => {
         console.log("Connected");
-        await loadUserCommandsOnAllServers(bot);
+        await loadCommandsOnAllServers(bot);
         await loadEvenements(bot);
         bot.user?.setActivity("🥊 RED BLUE 🥊", {
             type: ActivityType.Watching

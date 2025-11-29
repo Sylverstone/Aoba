@@ -1,17 +1,16 @@
 {
-  "name": "botaccueil",
+  "name": "aoba",
   "version": "1.0.0",
   "description": "Création Bot pour le BDE",
   "main": "dist/main.js",
   "type": "module",
   "scripts": {
-    "dev": "npx tsx watch src/main.ts",
-    "build": "npx rimraf dist && npx tsc",
-    "start": " pnpm build && node ."
+    "start": "node ."
   },
   "author": "Sylvio PELAGE MAXIME",
   "license": "ISC",
   "dependencies": {
+    "@napi-rs/canvas": "^0.1.83",
     "@types/mysql": "^2.15.26",
     "@types/node": "^22.10.5",
     "discord.js": "^14.17.2",
@@ -24,7 +23,6 @@
     "rimraf": "^6.0.1",
     "ts-node": "^10.9.2"
   },
-
   "devDependencies": {
     "nodemon": "^3.1.9",
     "tsx": "^4.19.2",
