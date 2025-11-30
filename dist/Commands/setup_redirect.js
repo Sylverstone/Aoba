@@ -11,7 +11,7 @@ const Commande = {
     run: async function (bot, interaction) {
         await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
         const targetMessage = interaction.targetMessage;
-        if (await ModelParams.doMessageAlreadyHaveRedirection(targetMessage.id)) {
+        if (await ModelParams.doMessageAlreadyHaveRedirection(targetMessage.id, interaction.guildId ?? "")) {
             return interaction.editReply({ content: `**Je logs déjà les réactions de ce message dans un salon...**` });
         }
         const channel = targetMessage.channel;
