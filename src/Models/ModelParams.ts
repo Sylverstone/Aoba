@@ -11,7 +11,6 @@ import Params from "../DBModels/params.js";
 export default class ModelParams
 {
 
-    private static collections : collections_t = {};
     private static db : CustomMongoClient;
     private static lastUse : Date;
     private static active : boolean = false;
@@ -26,8 +25,6 @@ export default class ModelParams
 
         ModelParams.db = new CustomMongoClient(process.env.DB_URL ?? "");
         await ModelParams.db.connect();
-        const db  = ModelParams.db.db("ParamsDB");
-        ModelParams.collections.params = db.collection("ReactionRedirectionParams");
         ModelParams.lastUse = new Date();
         ModelParams.active = true;
         console.log("[DB] La connection à la base de donnée a été ouverte.");
@@ -46,7 +43,6 @@ export default class ModelParams
                     ModelParams.active = false;
                     await ModelParams.db.close(true);
                     console.log("[DB] La connection à la base de donnée a été fermé.");
-                    ModelParams.collections = {};
 
                 }
             },ModelParams.timeInterval);
@@ -69,10 +65,12 @@ export default class ModelParams
         {
             await ModelParams.initConnection();
         }
+        else
+            ModelParams.lastUse = new Date();
 
         const Query : ParamsQuery_t = { guildId : guildId ?? "" };
 
-        const paramsCollection = await ModelParams.collections.params?.find(Query).toArray();
+        const paramsCollection = await ModelParams.db.getCollections().params?.find(Query).toArray();
         if(!isListParams_t(paramsCollection))
             return false;
 
@@ -99,7 +97,7 @@ export default class ModelParams
 
         try {
             const Query : ParamsQuery_t = { messageId : messageId};
-            const DeleteResult = await ModelParams.collections.params?.deleteMany(Query);
+            const DeleteResult = await ModelParams.db.getCollections().params?.deleteMany(Query);
             return (DeleteResult?.deletedCount ?? 0) > 0;
         }
         catch (err)
@@ -125,7 +123,7 @@ export default class ModelParams
                 channelId : channelId
             }
 
-            await ModelParams.collections.params?.insertOne(params);
+            await ModelParams.db.getCollections().params?.insertOne(params);
 
             return true;
         }
@@ -143,7 +141,7 @@ export default class ModelParams
             ModelParams.lastUse = new Date();
 
         try {
-            return ModelParams.collections.params?.find(Query).toArray();
+            return ModelParams.db.getCollections().params?.find(Query).toArray();
         }
         catch (err)
         {

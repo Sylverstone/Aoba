@@ -1,11 +1,15 @@
-import { DB } from "../Connection/connection.js";
+import { CustomMongoClient } from "../Connection/connection.js";
 import { isListParams_t } from "../types/types.js";
+/**
+ * Class faisant la liaison avec la base de donnée mongoDb, plus particulièrement la base ParamsDB avec la collection (table) ReactionRedirectionParams.
+ * La class gère également la fermeture et ouverture automatique de la connection à mongoDB pour éviter de laisser la connection ouverte. (utile pour le serverless de railway)
+ */
 class ModelParams {
     /**
      * Méthode qui initialise la connection à la base de donnée mongoDB. Elle lance également l'interval qui contrôle la connection la première fois qu'elle est lancé
      * */
     static async initConnection() {
-        ModelParams.db = new DB(process.env.DB_URL ?? "");
+        ModelParams.db = new CustomMongoClient(process.env.DB_URL ?? "");
         await ModelParams.db.connect();
         const db = ModelParams.db.db("ParamsDB");
         ModelParams.collections.params = db.collection("ReactionRedirectionParams");

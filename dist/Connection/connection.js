@@ -14,7 +14,10 @@ export async function connect() {
     collections.params = ParamsCollection;
     console.log("Connect look good");
 }
-export class DB extends mongodb.MongoClient {
+/**
+ * Un client mongoDB avec ses tables (collections) intégré.
+ * */
+export class CustomMongoClient extends mongodb.MongoClient {
     constructor(db_url) {
         super(db_url);
         this.collections = {};
