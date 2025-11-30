@@ -11,7 +11,7 @@ const Commande = {
     run: async function (bot, interaction) {
         await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
         const Query = { guildId: interaction.guildId ?? "" };
-        const params = await bot.collections.params?.find(Query).toArray();
+        const params = await ModelParams.getMessageFollowed(Query);
         if (!isListParams_t(params))
             return;
         const messageContents = await Promise.all(params.map(async (o) => {

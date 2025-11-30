@@ -6,7 +6,7 @@ export const isScript_t = (script) => {
         && script && "run" in script;
 };
 export class CBot extends Client {
-    constructor(collections) {
+    constructor() {
         super({
             intents: [
                 GatewayIntentBits.GuildMessages,
@@ -17,10 +17,14 @@ export class CBot extends Client {
             ],
             partials: [Partials.Message, Partials.Channel, Partials.Reaction]
         });
+        this.helpTexte = "";
         this.commands = new Collection();
-        this.collections = collections;
         getAllCommands().then(commands => {
             this.commands = commands;
+            for (const [_, commande] of this.commands) {
+                this.helpTexte += `${commande.admin ? "👮‍♂️" : "👤"} **${commande.name}**\n> ${commande.description}\n\n`;
+            }
+            this.helpTexte += "\n*‍👮‍ Signifie que la commande est utilisable que par les admins. 👤 Signifie que tous le monde peut l'utiliser.*";
         });
     }
     getToken() {

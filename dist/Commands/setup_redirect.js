@@ -46,14 +46,7 @@ const Commande = {
                 });
                 return;
             }
-            //channel trouvé
-            const params = {
-                redirectSalonId: GuildChannel.id,
-                messageId: interaction.targetMessage.id,
-                guildId: interaction.guildId ?? "",
-                channelId: interaction.channelId
-            };
-            await bot.collections.params?.insertOne(params);
+            await ModelParams.addMessageFollow(interaction.targetMessage.id, interaction.guildId ?? "", interaction.channelId, GuildChannel.id);
             co.stop("success");
         });
         co.on("end", async (c, reason) => {

@@ -1,6 +1,37 @@
-import { collections } from "../Connection/connection.js";
+import { CustomMongoClient } from "../Connection/connection.js";
 import { isListParams_t } from "../types/types.js";
-export default class ModelParams {
+/**
+ * Class faisant la liaison avec la base de donnée mongoDb, plus particulièrement la base ParamsDB avec la collection (table) ReactionRedirectionParams.
+ * La class gère également la fermeture et ouverture automatique de la connection à mongoDB pour éviter de laisser la connection ouverte. (utile pour le serverless de railway)
+ */
+class ModelParams {
+    /**
+     * Méthode qui initialise la connection à la base de donnée mongoDB. Elle lance également l'interval qui contrôle la connection la première fois qu'elle est lancé
+     * */
+    static async initConnection() {
+        ModelParams.db = new CustomMongoClient(process.env.DB_URL ?? "");
+        await ModelParams.db.connect();
+        const db = ModelParams.db.db("ParamsDB");
+        ModelParams.collections.params = db.collection("ReactionRedirectionParams");
+        ModelParams.lastUse = new Date();
+        ModelParams.active = true;
+        console.log("[DB] La connection à la base de donnée a été ouverte.");
+        if (!ModelParams.intervalActive) {
+            ModelParams.intervalActive = true;
+            setInterval(async () => {
+                if (!ModelParams.active)
+                    return;
+                const now = new Date().getTime();
+                const lastUseNow = ModelParams.lastUse.getTime();
+                if (now - lastUseNow >= 2 * 1000 * 60) {
+                    ModelParams.active = false;
+                    await ModelParams.db.close(true);
+                    console.log("[DB] La connection à la base de donnée a été fermé.");
+                    ModelParams.collections = {};
+                }
+            }, ModelParams.timeInterval);
+        }
+    }
     /**
      * Méthode permettant de savoir si le bot suit déjà un message.
      * @param messageId - l'id du message que le bot doit suivre les réactions
@@ -8,8 +39,14 @@ export default class ModelParams {
      * @return true si ce message n'est pas déjà suivie par le bot, false sinon
      * */
     static async doMessageAlreadyHaveRedirection(messageId, guildId) {
+        // const db = new DB(process.env.DB_URL ?? "");
+        // await db.connect();
+        // const collections = db.getCollections();
+        if (!ModelParams.active) {
+            await ModelParams.initConnection();
+        }
         const Query = { guildId: guildId ?? "" };
-        const paramsCollection = await collections.params?.find(Query).toArray();
+        const paramsCollection = await ModelParams.collections.params?.find(Query).toArray();
         if (!isListParams_t(paramsCollection))
             return false;
         const messageIdSaved = paramsCollection.map((p) => {
@@ -23,13 +60,54 @@ export default class ModelParams {
      * @return true si le delete à eu lieu, false sinon, null si il y a eu un problème dans la bdd
      * */
     static async deleteMessageFollow(messageId) {
+        if (!ModelParams.active) {
+            await ModelParams.initConnection();
+        }
+        else
+            ModelParams.lastUse = new Date();
         try {
             const Query = { messageId: messageId };
-            const DeleteResult = await collections.params?.deleteMany(Query);
+            const DeleteResult = await ModelParams.collections.params?.deleteMany(Query);
             return (DeleteResult?.deletedCount ?? 0) > 0;
         }
         catch (err) {
             return null;
         }
     }
+    static async addMessageFollow(messageId, guildId, channelId, redirectChannelId) {
+        if (!ModelParams.active)
+            await ModelParams.initConnection();
+        else
+            ModelParams.lastUse = new Date();
+        try {
+            const params = {
+                redirectSalonId: redirectChannelId,
+                messageId: messageId,
+                guildId: guildId,
+                channelId: channelId
+            };
+            await ModelParams.collections.params?.insertOne(params);
+            return true;
+        }
+        catch (err) {
+            return null;
+        }
+    }
+    static async getMessageFollowed(Query) {
+        if (!ModelParams.active)
+            await ModelParams.initConnection();
+        else
+            ModelParams.lastUse = new Date();
+        try {
+            return ModelParams.collections.params?.find(Query).toArray();
+        }
+        catch (err) {
+            return null;
+        }
+    }
 }
+ModelParams.collections = {};
+ModelParams.active = false;
+ModelParams.intervalActive = false;
+ModelParams.timeInterval = 1 * 1000 * 60;
+export default ModelParams;
