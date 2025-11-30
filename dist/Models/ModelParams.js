@@ -11,8 +11,6 @@ class ModelParams {
     static async initConnection() {
         ModelParams.db = new CustomMongoClient(process.env.DB_URL ?? "");
         await ModelParams.db.connect();
-        const db = ModelParams.db.db("ParamsDB");
-        ModelParams.collections.params = db.collection("ReactionRedirectionParams");
         ModelParams.lastUse = new Date();
         ModelParams.active = true;
         console.log("[DB] La connection à la base de donnée a été ouverte.");
@@ -27,7 +25,6 @@ class ModelParams {
                     ModelParams.active = false;
                     await ModelParams.db.close(true);
                     console.log("[DB] La connection à la base de donnée a été fermé.");
-                    ModelParams.collections = {};
                 }
             }, ModelParams.timeInterval);
         }
@@ -45,8 +42,10 @@ class ModelParams {
         if (!ModelParams.active) {
             await ModelParams.initConnection();
         }
+        else
+            ModelParams.lastUse = new Date();
         const Query = { guildId: guildId ?? "" };
-        const paramsCollection = await ModelParams.collections.params?.find(Query).toArray();
+        const paramsCollection = await ModelParams.db.getCollections().params?.find(Query).toArray();
         if (!isListParams_t(paramsCollection))
             return false;
         const messageIdSaved = paramsCollection.map((p) => {
@@ -67,7 +66,7 @@ class ModelParams {
             ModelParams.lastUse = new Date();
         try {
             const Query = { messageId: messageId };
-            const DeleteResult = await ModelParams.collections.params?.deleteMany(Query);
+            const DeleteResult = await ModelParams.db.getCollections().params?.deleteMany(Query);
             return (DeleteResult?.deletedCount ?? 0) > 0;
         }
         catch (err) {
@@ -86,7 +85,7 @@ class ModelParams {
                 guildId: guildId,
                 channelId: channelId
             };
-            await ModelParams.collections.params?.insertOne(params);
+            await ModelParams.db.getCollections().params?.insertOne(params);
             return true;
         }
         catch (err) {
@@ -99,14 +98,13 @@ class ModelParams {
         else
             ModelParams.lastUse = new Date();
         try {
-            return ModelParams.collections.params?.find(Query).toArray();
+            return ModelParams.db.getCollections().params?.find(Query).toArray();
         }
         catch (err) {
             return null;
         }
     }
 }
-ModelParams.collections = {};
 ModelParams.active = false;
 ModelParams.intervalActive = false;
 ModelParams.timeInterval = 1 * 1000 * 60;
