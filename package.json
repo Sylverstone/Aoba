@@ -5,7 +5,9 @@
   "main": "dist/main.js",
   "type": "module",
   "scripts": {
-    "start": "node ."
+    "dev": "npx tsx watch src/main.ts",
+    "build": "npx rimraf dist && npx tsc",
+    "start": "pnpm build && node ."
   },
   "author": "Sylvio PELAGE MAXIME",
   "license": "ISC",
@@ -13,6 +15,7 @@
     "@napi-rs/canvas": "^0.1.83",
     "@types/mysql": "^2.15.26",
     "@types/node": "^22.10.5",
+    "discord-api-types": "^0.38.35",
     "discord.js": "^14.17.2",
     "dotenv": "^16.4.7",
     "fs": "^0.0.1-security",
@@ -23,10 +26,10 @@
     "rimraf": "^6.0.1",
     "ts-node": "^10.9.2"
   },
+
   "devDependencies": {
     "nodemon": "^3.1.9",
     "tsx": "^4.19.2",
     "typescript": "^5.8.3"
   }
-
 }
