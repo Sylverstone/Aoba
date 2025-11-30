@@ -11,7 +11,7 @@ import {
 import {script_t} from "../config/types.js";
 import {CommandType_t} from "../Loaders/LoadCommands.js";
 import {CBot} from "../class/CBot.js";
-import Params from "../DBModels/params.js";
+import Params, {ParamsQuery_t} from "../DBModels/params.js";
 import {CollectorEndReason, isListParams_t} from "../types/types.js";
 import ModelParams from "../Models/ModelParams.js";
 
@@ -30,7 +30,8 @@ const Commande : script_t =
 
             await interaction.deferReply({ flags : [MessageFlags.Ephemeral]});
 
-            const params = await bot.collections.params?.find({}).toArray();
+            const Query : ParamsQuery_t = { guildId : interaction.guildId ?? "" };
+            const params = await bot.collections.params?.find(Query).toArray();
             if(!isListParams_t(params))
                 return;
 

@@ -8,7 +8,6 @@ import {
 import {script_t} from "../config/types.js";
 import {CommandType_t} from "../Loaders/LoadCommands.js";
 import {CBot, isScript_t} from "../class/CBot.js";
-import getAllCommands from "../Utils/getAllCommands.js";
 
 type CommandData = {
     name : string,

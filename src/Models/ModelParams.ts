@@ -9,11 +9,13 @@ export default class ModelParams
     /**
      * Méthode permettant de savoir si le bot suit déjà un message.
      * @param messageId - l'id du message que le bot doit suivre les réactions
+     * @param guildId - l'id de la guild
      * @return true si ce message n'est pas déjà suivie par le bot, false sinon
      * */
-    public static async doMessageAlreadyHaveRedirection(messageId : string)
+    public static async doMessageAlreadyHaveRedirection(messageId : string, guildId : string)
     {
-        const paramsCollection = await collections.params?.find({}).toArray();
+        const Query : ParamsQuery_t = { guildId : guildId ?? "" };
+        const paramsCollection = await collections.params?.find(Query).toArray();
         if(!isListParams_t(paramsCollection))
             return false;
 
