@@ -31,7 +31,7 @@ const Commande : script_t =
             await interaction.deferReply({ flags : [MessageFlags.Ephemeral]});
 
             const Query : ParamsQuery_t = { guildId : interaction.guildId ?? "" };
-            const params = await bot.collections.params?.find(Query).toArray();
+            const params = await ModelParams.getMessageFollowed(Query);
             if(!isListParams_t(params))
                 return;
 

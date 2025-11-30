@@ -3,11 +3,11 @@ import {CBot}  from "./class/CBot.js";
 import "dotenv/config";
 import { loadCommandsOnAllServers } from "./Loaders/LoadCommands.js";
 import loadEvenements from "./Loaders/LoadEvents.js";
-import {collections, connect} from "./Connection/connection.js";
 
-connect().then(async () => {
 
-    let bot = new CBot(collections);
+let bot = new CBot();
+
+bot.login(process.env.TOKEN).then(async () => {
 
     bot.once(Events.ClientReady, async () => {
         console.log("Connected");
@@ -23,8 +23,7 @@ connect().then(async () => {
         bot.user?.setStatus("dnd");
     })
 
-    await bot.login(process.env.TOKEN);
-})
+});
 
 // const connection = GetConnection();
 //

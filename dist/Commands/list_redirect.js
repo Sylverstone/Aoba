@@ -10,7 +10,8 @@ const Commande = {
     typeCommand: CommandType_t.CHAT_INPUT,
     run: async function (bot, interaction) {
         await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
-        const params = await bot.collections.params?.find({}).toArray();
+        const Query = { guildId: interaction.guildId ?? "" };
+        const params = await ModelParams.getMessageFollowed(Query);
         if (!isListParams_t(params))
             return;
         const messageContents = await Promise.all(params.map(async (o) => {

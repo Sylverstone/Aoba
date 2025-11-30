@@ -1,10 +1,57 @@
 import * as mongodb from "mongodb";
-import {collections_t,collections} from "../Connection/connection.js";
-import {isListParams_t, isParams_t} from "../types/types.js";
+import {collections_t, CustomMongoClient} from "../Connection/connection.js";
+import {isListParams_t} from "../types/types.js";
 import params, {ParamsQuery_t} from "../DBModels/params.js";
+import Params from "../DBModels/params.js";
 
+/**
+ * Class faisant la liaison avec la base de donnée mongoDb, plus particulièrement la base ParamsDB avec la collection (table) ReactionRedirectionParams.
+ * La class gère également la fermeture et ouverture automatique de la connection à mongoDB pour éviter de laisser la connection ouverte. (utile pour le serverless de railway)
+ */
 export default class ModelParams
 {
+
+    private static collections : collections_t = {};
+    private static db : CustomMongoClient;
+    private static lastUse : Date;
+    private static active : boolean = false;
+    private static intervalActive : boolean = false;
+    private static timeInterval : number = 1 * 1000 * 60;
+
+    /**
+     * Méthode qui initialise la connection à la base de donnée mongoDB. Elle lance également l'interval qui contrôle la connection la première fois qu'elle est lancé
+     * */
+    public static async initConnection()
+    {
+
+        ModelParams.db = new CustomMongoClient(process.env.DB_URL ?? "");
+        await ModelParams.db.connect();
+        const db  = ModelParams.db.db("ParamsDB");
+        ModelParams.collections.params = db.collection("ReactionRedirectionParams");
+        ModelParams.lastUse = new Date();
+        ModelParams.active = true;
+        console.log("[DB] La connection à la base de donnée a été ouverte.");
+
+        if(!ModelParams.intervalActive)
+        {
+            ModelParams.intervalActive = true;
+            setInterval(async() => {
+                if(!ModelParams.active)
+                    return;
+
+                const now = new Date().getTime();
+                const lastUseNow = ModelParams.lastUse.getTime();
+                if(now - lastUseNow >= 2 * 1000 * 60)
+                {
+                    ModelParams.active = false;
+                    await ModelParams.db.close(true);
+                    console.log("[DB] La connection à la base de donnée a été fermé.");
+                    ModelParams.collections = {};
+
+                }
+            },ModelParams.timeInterval);
+        }
+    }
 
     /**
      * Méthode permettant de savoir si le bot suit déjà un message.
@@ -14,8 +61,18 @@ export default class ModelParams
      * */
     public static async doMessageAlreadyHaveRedirection(messageId : string, guildId : string)
     {
+        // const db = new DB(process.env.DB_URL ?? "");
+        // await db.connect();
+        // const collections = db.getCollections();
+
+        if(!ModelParams.active)
+        {
+            await ModelParams.initConnection();
+        }
+
         const Query : ParamsQuery_t = { guildId : guildId ?? "" };
-        const paramsCollection = await collections.params?.find(Query).toArray();
+
+        const paramsCollection = await ModelParams.collections.params?.find(Query).toArray();
         if(!isListParams_t(paramsCollection))
             return false;
 
@@ -33,10 +90,60 @@ export default class ModelParams
      * */
     public static async deleteMessageFollow(messageId : string) : Promise<boolean | null>
     {
+        if(!ModelParams.active)
+        {
+            await ModelParams.initConnection();
+        }
+        else
+            ModelParams.lastUse = new Date();
+
         try {
             const Query : ParamsQuery_t = { messageId : messageId};
-            const DeleteResult = await collections.params?.deleteMany(Query);
+            const DeleteResult = await ModelParams.collections.params?.deleteMany(Query);
             return (DeleteResult?.deletedCount ?? 0) > 0;
+        }
+        catch (err)
+        {
+            return null;
+        }
+
+    }
+
+    public static async addMessageFollow(messageId : string, guildId : string, channelId : string, redirectChannelId : string)
+    {
+        if(!ModelParams.active)
+            await ModelParams.initConnection();
+        else
+            ModelParams.lastUse = new Date();
+
+        try {
+
+            const params : Params = {
+                redirectSalonId : redirectChannelId,
+                messageId : messageId,
+                guildId : guildId,
+                channelId : channelId
+            }
+
+            await ModelParams.collections.params?.insertOne(params);
+
+            return true;
+        }
+        catch (err)
+        {
+            return null;
+        }
+
+    }
+
+    public static async getMessageFollowed(Query : ParamsQuery_t){
+        if(!ModelParams.active)
+            await ModelParams.initConnection();
+        else
+            ModelParams.lastUse = new Date();
+
+        try {
+            return ModelParams.collections.params?.find(Query).toArray();
         }
         catch (err)
         {

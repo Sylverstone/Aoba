@@ -21,10 +21,9 @@ export const isScript_t = (script : unknown) : script is script_t =>
 export class CBot extends Client{
 
     public commands : Collection<string,script_t>;
-    //pas obliger vu que collections est accéssible de partout avec un import mais why not
-    public collections : collections_t;
+    public helpTexte : string = "";
 
-    constructor(collections : collections_t){
+    constructor(){
         super({
             intents: [
                 GatewayIntentBits.GuildMessages,
@@ -35,14 +34,19 @@ export class CBot extends Client{
 
             ],
             partials : [Partials.Message, Partials.Channel, Partials.Reaction]
-            
         })
 
         this.commands = new Collection();
-        this.collections = collections;
 
         getAllCommands().then(commands => {
             this.commands = commands;
+
+            for(const [_,commande] of this.commands)
+            {
+                this.helpTexte += `${commande.admin ? "👮‍♂️" : "👤"} **${commande.name}**\n> ${commande.description}\n\n`;
+            }
+
+            this.helpTexte += "\n*‍👮‍ Signifie que la commande est utilisable que par les admins. 👤 Signifie que tous le monde peut l'utiliser.*";
         })
 
     }

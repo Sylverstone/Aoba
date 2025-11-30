@@ -9,12 +9,14 @@ import {CBot} from "../class/CBot.js";
 
 import {isListParams_t} from "../types/types.js";
 import params from "../DBModels/params.js";
+import ModelParams from "../Models/ModelParams.js";
 
-
-const name = Events.MessageReactionAdd;
-
-
-const exec = async (bot : CBot, reaction : MessageReaction | PartialMessageReaction, user : User | PartialUser  ) =>  {
+export enum EHandleReaction
+{
+    Suppression,
+    Ajout
+}
+export async function handleReaction(bot : CBot,reaction : MessageReaction | PartialMessageReaction, user : User | PartialUser,EHandleReact : EHandleReaction ){
 
     // if(reaction.partial)
     //     await reaction.fetch();
@@ -23,7 +25,7 @@ const exec = async (bot : CBot, reaction : MessageReaction | PartialMessageReact
     //     await user.fetch();
 
     const message = reaction.message;
-    const collectionsParams = await bot.collections.params?.find({}).toArray()
+    const collectionsParams = await ModelParams.getMessageFollowed({ guildId : message.guildId ?? ""});
     if(!isListParams_t(collectionsParams))
         return;
 
@@ -41,8 +43,7 @@ const exec = async (bot : CBot, reaction : MessageReaction | PartialMessageReact
     if(!salon)
     {
         // le salon n'existe plus alors que le joueur l'a set, on supprimeee
-        const query = { messageId : message.id };
-        await bot.collections.params?.deleteMany(query);
+        await ModelParams.deleteMessageFollow(messageId);
         return;
     }
     //le salon existe
@@ -53,11 +54,15 @@ const exec = async (bot : CBot, reaction : MessageReaction | PartialMessageReact
     if(messageReacted.partial)
         await messageReacted.fetch();
 
+    const texte = EHandleReact === EHandleReaction.Ajout ?
+        `${user} à réagit à ce [message](https://discord.com/channels/${guildId}/${channelId}/${messageId}) avec l'émoji - ${reaction.emoji.toString()}` :
+        `${user} à supprimer sa réaction sur ce [message](https://discord.com/channels/${guildId}/${channelId}/${messageId}). Il avait mit l'émoji - ${reaction.emoji.toString()}`;
+
     return salon.send({
         embeds : [{
             title : "LOGS",
             color : 0xff6919,
-            description : `${user} à réagit à ce [message](https://discord.com/channels/${guildId}/${channelId}/${messageId}) avec l'émoji - ${reaction.emoji.toString()}`
+            description : texte
             ,
 
             fields : [
@@ -76,6 +81,13 @@ const exec = async (bot : CBot, reaction : MessageReaction | PartialMessageReact
         }
         ]}
     );
+}
+
+const name = Events.MessageReactionAdd;
+
+
+const exec = async (bot : CBot, reaction : MessageReaction | PartialMessageReaction, user : User | PartialUser  ) =>  {
+    await handleReaction(bot,reaction,user,EHandleReaction.Ajout);
 }
 
 export{name,exec}

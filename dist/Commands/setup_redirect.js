@@ -11,7 +11,7 @@ const Commande = {
     run: async function (bot, interaction) {
         await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
         const targetMessage = interaction.targetMessage;
-        if (await ModelParams.doMessageAlreadyHaveRedirection(targetMessage.id)) {
+        if (await ModelParams.doMessageAlreadyHaveRedirection(targetMessage.id, interaction.guildId ?? "")) {
             return interaction.editReply({ content: `**Je logs déjà les réactions de ce message dans un salon...**` });
         }
         const channel = targetMessage.channel;
@@ -46,14 +46,7 @@ const Commande = {
                 });
                 return;
             }
-            //channel trouvé
-            const params = {
-                redirectSalonId: GuildChannel.id,
-                messageId: interaction.targetMessage.id,
-                guildId: interaction.guildId ?? "",
-                channelId: interaction.channelId
-            };
-            await bot.collections.params?.insertOne(params);
+            await ModelParams.addMessageFollow(interaction.targetMessage.id, interaction.guildId ?? "", interaction.channelId, GuildChannel.id);
             co.stop("success");
         });
         co.on("end", async (c, reason) => {

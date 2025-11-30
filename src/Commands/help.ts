@@ -1,11 +1,7 @@
-import {ChatInputCommandInteraction, MessageFlags,APIEmbedField} from "discord.js";
+import {ChatInputCommandInteraction, MessageFlags} from "discord.js";
 import {script_t} from "../config/types.js";
 import {CommandType_t} from "../Loaders/LoadCommands.js";
-import {CBot, isScript_t} from "../class/CBot.js";
-import * as fs from "fs";
-import * as path from "path";
-import __dirname from "../dirname.js";
-import {pathToFileURL} from "url";
+import {CBot} from "../class/CBot.js";
 
 type CommandData = {
     name : string,
@@ -24,30 +20,10 @@ const Commande : script_t =
 
     run : async function(bot : CBot, interaction : ChatInputCommandInteraction){
 
-        console.log("help");
-        await interaction.deferReply({ flags : [MessageFlags.Ephemeral]});
-        let texte = "";
-        const Commandes = fs.readdirSync(path.join(__dirname,"Commands")).filter(p => !p.includes("help")).map(p => {
-            return path.join(__dirname,"Commands", p);
-        })
-
-        console.log(Commandes);
-        for(const commande of Commandes)
-        {
-            const Commande= (await import(pathToFileURL(commande).href)).default;
-            console.log(Commande)
-            if(!isScript_t(Commande))
-                continue;
-
-            texte += `${Commande.admin ? "👮‍♂️" : "👤"} **${Commande.name}**\n> ${Commande.description}\n\n`;
-        }
-
-        texte += "\n*‍👮‍ Signifie que la commande est utilisable que par les admins. 👤 Signifie que tous le monde peut l'utiliser.*"
-
-        await interaction.editReply({embeds : [
+        await interaction.reply({embeds : [
                 {
                     title : "",
-                    description : `# Liste des commandes d'${bot.user?.displayName ?? "Aoba"}\n\n\n${texte}`,
+                    description : `# Liste des commandes d'${bot.user?.displayName ?? "Aoba"}\n\n\n${bot.helpTexte}`,
                     color : 0x6910ff,
                     timestamp : new Date().toISOString(),
                     footer : {
@@ -55,7 +31,7 @@ const Commande : script_t =
                         text : "Au plaisir"
                     },
                 }
-            ]});
+            ], flags : [MessageFlags.Ephemeral]});
     }
 }
 
