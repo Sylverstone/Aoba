@@ -36,8 +36,8 @@ jobs:
 
       - name : switch to prod
         run : |
-          git fetch origin prod || true
-          git switch prod
+          git fetch origin test || true
+          git switch test
           git rm -rf . || true
 
       - name: Copy to prod
