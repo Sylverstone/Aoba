@@ -8,9 +8,9 @@ export var CollectorEndReason;
 })(CollectorEndReason || (CollectorEndReason = {}));
 //a vraiment faire par la suite mais flemme
 export function isParams_t(obj) {
-    return true;
+    return obj != null && typeof obj === "object" && "redirectSalonId" in obj;
 }
 //a vraiment faire par la suite mais flemme
 export function isListParams_t(obj) {
-    return true;
+    return obj != null && Array.isArray(obj) && obj.every(v => isParams_t(v));
 }
