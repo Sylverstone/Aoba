@@ -17,17 +17,36 @@ jobs:
         with:
           node-version : 20
           token: ${{ secrets.PAT }}
+          fetch-depth: 0
+
+      - name: Setup SSH
+        run: |
+          eval "$(ssh-agent -s)"
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/key
+          chmod 600 ~/.ssh/key
+          ssh-add ~/.ssh/key
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
 
       - name : Logging Git
         run : |
           git config user.name "${{ secrets.LOGIN }}"
           git config user.email "${{ secrets.ID }}+${{ secrets.LOGIN }}@users.noreply.github.com"
-          git switch prod
-      - name : Installing PNPM
-        run : npm i -g pnpm
 
-      - name : Installing dependencies
-        run : pnpm i --frozen-lockfile
+
+      - name : switch to prod
+        run : |
+          git fetch origin prod || true
+          git switch prod
+          git rm -rf . || true
+
+      - name: Copy to prod
+        run : |
+          mkdir -p temp_copy
+          cp -r dist/ temp_copy/
+          cp package.prod.json temp_copy/
+          mv temp_copy/package.prod.json temp_copy/package.json
+          
 
 
 
