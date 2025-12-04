@@ -28,12 +28,6 @@ jobs:
           ssh-add ~/.ssh/key
           ssh-keyscan github.com >> ~/.ssh/known_hosts
 
-      - name : Logging Git
-        run : |
-          git config user.name "${{ secrets.LOGIN }}"
-          git config user.email "${{ secrets.ID }}+${{ secrets.LOGIN }}@users.noreply.github.com"
-
-
       - name : switch to prod
         run : |
           git fetch origin test || true
