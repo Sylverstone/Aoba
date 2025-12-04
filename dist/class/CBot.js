@@ -1,5 +1,6 @@
-import { Client, Collection, GatewayIntentBits, Partials, } from "discord.js";
+import { ActivityType, Client, Collection, GatewayIntentBits, Partials, } from "discord.js";
 import getAllCommands from "../Utils/getAllCommands.js";
+import getAllowConnection from "../Utils/getAllowConnection.js";
 //Renvoie true si le paramètre est un script_t
 export const isScript_t = (script) => {
     return script !== null && typeof script === "object" && "name" in script && "description" in script
@@ -29,6 +30,20 @@ export class CBot extends Client {
     }
     getToken() {
         return process.env.TOKEN ?? "token";
+    }
+    setupActivity(allowConnection = "") {
+        if (allowConnection == "")
+            allowConnection = getAllowConnection();
+        if (allowConnection == "oui") {
+            this.user?.setActivity("🥊 RED BLUE 🥊", {
+                type: ActivityType.Watching
+            });
+        }
+        else {
+            this.user?.setActivity("👑 RED BLUE 👑", {
+                type: ActivityType.Watching
+            });
+        }
     }
     getID() {
         return process.env.CLIENTID ?? "";

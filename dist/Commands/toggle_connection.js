@@ -27,6 +27,7 @@ const Commande = {
             Json.allowConnection = "non";
         }
         fs.writeFileSync(pathJson, JSON.stringify(Json, null, 4));
+        bot.setupActivity(Json.allowConnection);
         return interaction.editReply({
             content: Json.allowConnection === "oui" ? "La connexion à la base de donnée a été autorisé" :
                 "La connexion à la base de donnée a été interdite"

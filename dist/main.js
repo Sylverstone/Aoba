@@ -1,4 +1,4 @@
-import { ActivityType, Events } from "discord.js";
+import { Events } from "discord.js";
 import { CBot } from "./class/CBot.js";
 import "dotenv/config";
 import { loadCommandsOnAllServers } from "./Loaders/LoadCommands.js";
@@ -9,9 +9,7 @@ bot.login(process.env.TOKEN).then(async () => {
         console.log("Connected");
         await loadCommandsOnAllServers(bot);
         await loadEvenements(bot);
-        bot.user?.setActivity("🥊 RED BLUE 🥊", {
-            type: ActivityType.Watching
-        });
+        bot.setupActivity();
         bot.user?.setStatus("dnd");
     });
 });
