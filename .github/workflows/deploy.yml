@@ -10,26 +10,23 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: node:20
+    permissions:
+      contents: write
     steps:
-      - uses : actions/checkout@v4
+      - uses : actions/checkout@v6
         with:
           node-version : 20
           token: ${{ secrets.PAT }}
 
-      - name : Config GIT
-        run : | 
-          git switch prod
-          ls
-      - name : Add github.com to known_hosts
+      - name : Switching to prod
         run : |
-          chmod u+x deploy.sh
-          ./deploy.sh "$token2"
+          git switch prod
+
       - name : Installing PNPM
         run : npm i -g pnpm
+
       - name : Installing dependencies
         run : pnpm i --frozen-lockfile
-      - name : Running deploy.sh
-        run : |
-          chmod u+x deploy.sh
-          ./deploy.sh
+
+
 
