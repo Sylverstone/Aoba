@@ -3,6 +3,7 @@ import {collections_t, CustomMongoClient} from "../Connection/connection.js";
 import {isListParams_t} from "../types/types.js";
 import params, {ParamsQuery_t} from "../DBModels/params.js";
 import Params from "../DBModels/params.js";
+import getAllowConnection from "../Utils/getAllowConnection.js";
 
 /**
  * Class faisant la liaison avec la base de donnée mongoDb, plus particulièrement la base ParamsDB avec la collection (table) ReactionRedirectionParams.
@@ -60,25 +61,36 @@ export default class ModelParams
         // const db = new DB(process.env.DB_URL ?? "");
         // await db.connect();
         // const collections = db.getCollections();
-
-        if(!ModelParams.active)
+        if(getAllowConnection() != "oui")
         {
-            await ModelParams.initConnection();
+            return null;
         }
-        else
-            ModelParams.lastUse = new Date();
 
-        const Query : ParamsQuery_t = { guildId : guildId ?? "" };
+        try {
+            if(!ModelParams.active)
+            {
+                await ModelParams.initConnection();
+            }
+            else
+                ModelParams.lastUse = new Date();
 
-        const paramsCollection = await ModelParams.db.getCollections().params?.find(Query).toArray();
-        if(!isListParams_t(paramsCollection))
-            return false;
+            const Query : ParamsQuery_t = { guildId : guildId ?? "" };
 
-        const messageIdSaved = paramsCollection.map((p : params) => {
-            return p.messageId;
-        });
+            const paramsCollection = await ModelParams.db.getCollections().params?.find(Query).toArray();
+            if(!isListParams_t(paramsCollection))
+                return false;
 
-        return messageIdSaved.includes(messageId);
+            const messageIdSaved = paramsCollection.map((p : params) => {
+                return p.messageId;
+            });
+
+            return messageIdSaved.includes(messageId);
+        }
+        catch (err)
+        {
+            return null;
+        }
+
     }
 
     /**
@@ -88,6 +100,11 @@ export default class ModelParams
      * */
     public static async deleteMessageFollow(messageId : string) : Promise<boolean | null>
     {
+        if(getAllowConnection() != "oui")
+        {
+            return null;
+        }
+
         if(!ModelParams.active)
         {
             await ModelParams.initConnection();
@@ -109,6 +126,11 @@ export default class ModelParams
 
     public static async addMessageFollow(messageId : string, guildId : string, channelId : string, redirectChannelId : string)
     {
+        if(getAllowConnection() != "oui")
+        {
+            return null;
+        }
+
         if(!ModelParams.active)
             await ModelParams.initConnection();
         else
@@ -135,6 +157,11 @@ export default class ModelParams
     }
 
     public static async getMessageFollowed(Query : ParamsQuery_t){
+
+        if(getAllowConnection() != "oui")
+        {
+            return null;
+        }
         if(!ModelParams.active)
             await ModelParams.initConnection();
         else

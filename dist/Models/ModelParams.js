@@ -1,5 +1,6 @@
 import { CustomMongoClient } from "../Connection/connection.js";
 import { isListParams_t } from "../types/types.js";
+import getAllowConnection from "../Utils/getAllowConnection.js";
 /**
  * Class faisant la liaison avec la base de donnée mongoDb, plus particulièrement la base ParamsDB avec la collection (table) ReactionRedirectionParams.
  * La class gère également la fermeture et ouverture automatique de la connection à mongoDB pour éviter de laisser la connection ouverte. (utile pour le serverless de railway)
@@ -11,8 +12,6 @@ class ModelParams {
     static async initConnection() {
         ModelParams.db = new CustomMongoClient(process.env.DB_URL ?? "");
         await ModelParams.db.connect();
-        const db = ModelParams.db.db("ParamsDB");
-        ModelParams.collections.params = db.collection("ReactionRedirectionParams");
         ModelParams.lastUse = new Date();
         ModelParams.active = true;
         console.log("[DB] La connection à la base de donnée a été ouverte.");
@@ -27,7 +26,6 @@ class ModelParams {
                     ModelParams.active = false;
                     await ModelParams.db.close(true);
                     console.log("[DB] La connection à la base de donnée a été fermé.");
-                    ModelParams.collections = {};
                 }
             }, ModelParams.timeInterval);
         }
@@ -42,17 +40,27 @@ class ModelParams {
         // const db = new DB(process.env.DB_URL ?? "");
         // await db.connect();
         // const collections = db.getCollections();
-        if (!ModelParams.active) {
-            await ModelParams.initConnection();
+        if (getAllowConnection() != "oui") {
+            return null;
         }
-        const Query = { guildId: guildId ?? "" };
-        const paramsCollection = await ModelParams.collections.params?.find(Query).toArray();
-        if (!isListParams_t(paramsCollection))
-            return false;
-        const messageIdSaved = paramsCollection.map((p) => {
-            return p.messageId;
-        });
-        return messageIdSaved.includes(messageId);
+        try {
+            if (!ModelParams.active) {
+                await ModelParams.initConnection();
+            }
+            else
+                ModelParams.lastUse = new Date();
+            const Query = { guildId: guildId ?? "" };
+            const paramsCollection = await ModelParams.db.getCollections().params?.find(Query).toArray();
+            if (!isListParams_t(paramsCollection))
+                return false;
+            const messageIdSaved = paramsCollection.map((p) => {
+                return p.messageId;
+            });
+            return messageIdSaved.includes(messageId);
+        }
+        catch (err) {
+            return null;
+        }
     }
     /**
      * Méthode pour supprimer un message des suivies du bot
@@ -60,6 +68,9 @@ class ModelParams {
      * @return true si le delete à eu lieu, false sinon, null si il y a eu un problème dans la bdd
      * */
     static async deleteMessageFollow(messageId) {
+        if (getAllowConnection() != "oui") {
+            return null;
+        }
         if (!ModelParams.active) {
             await ModelParams.initConnection();
         }
@@ -67,7 +78,7 @@ class ModelParams {
             ModelParams.lastUse = new Date();
         try {
             const Query = { messageId: messageId };
-            const DeleteResult = await ModelParams.collections.params?.deleteMany(Query);
+            const DeleteResult = await ModelParams.db.getCollections().params?.deleteMany(Query);
             return (DeleteResult?.deletedCount ?? 0) > 0;
         }
         catch (err) {
@@ -75,6 +86,9 @@ class ModelParams {
         }
     }
     static async addMessageFollow(messageId, guildId, channelId, redirectChannelId) {
+        if (getAllowConnection() != "oui") {
+            return null;
+        }
         if (!ModelParams.active)
             await ModelParams.initConnection();
         else
@@ -86,7 +100,7 @@ class ModelParams {
                 guildId: guildId,
                 channelId: channelId
             };
-            await ModelParams.collections.params?.insertOne(params);
+            await ModelParams.db.getCollections().params?.insertOne(params);
             return true;
         }
         catch (err) {
@@ -94,19 +108,21 @@ class ModelParams {
         }
     }
     static async getMessageFollowed(Query) {
+        if (getAllowConnection() != "oui") {
+            return null;
+        }
         if (!ModelParams.active)
             await ModelParams.initConnection();
         else
             ModelParams.lastUse = new Date();
         try {
-            return ModelParams.collections.params?.find(Query).toArray();
+            return ModelParams.db.getCollections().params?.find(Query).toArray();
         }
         catch (err) {
             return null;
         }
     }
 }
-ModelParams.collections = {};
 ModelParams.active = false;
 ModelParams.intervalActive = false;
 ModelParams.timeInterval = 1 * 1000 * 60;

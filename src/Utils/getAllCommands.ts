@@ -4,7 +4,7 @@ import __dirname from "../dirname.js";
 import {pathToFileURL} from "url";
 import {isScript_t} from "../class/CBot.js";
 import {script_t} from "../config/types.js";
-import {Worker} from "node:worker_threads";
+//import {Worker} from "node:worker_threads";
 import {Collection} from "discord.js";
 
 //Test d'utilisation de worker pour les thread, pas très concluant, et inutile dans ce cas

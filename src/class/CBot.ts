@@ -1,4 +1,5 @@
 import {
+    ActivityType,
     Client,
     Collection,
     GatewayIntentBits,
@@ -7,6 +8,7 @@ import {
 import { script_t } from "../config/types.js";
 import { collections_t } from "../Connection/connection";
 import getAllCommands from "../Utils/getAllCommands.js";
+import getAllowConnection from "../Utils/getAllowConnection.js";
 
 
 
@@ -54,6 +56,25 @@ export class CBot extends Client{
     public getToken() : string
     {
         return process.env.TOKEN ?? "token";
+    }
+
+    public setupActivity(allowConnection : string = "")
+    {
+
+        if(allowConnection == "")
+            allowConnection = getAllowConnection();
+
+        if(allowConnection == "oui")
+        {
+            this.user?.setActivity("🥊 RED BLUE 🥊", {
+                type : ActivityType.Watching
+            })
+        }
+        else {
+            this.user?.setActivity("👑 RED BLUE 👑", {
+                type : ActivityType.Watching
+            })
+        }
     }
    
     public getID() : string

@@ -16,9 +16,7 @@ bot.login(process.env.TOKEN).then(async () => {
         await loadCommandsOnAllServers(bot);
         await loadEvenements(bot);
 
-        bot.user?.setActivity("🥊 RED BLUE 🥊", {
-            type : ActivityType.Watching
-        })
+        bot.setupActivity();
 
         bot.user?.setStatus("dnd");
     })

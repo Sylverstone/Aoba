@@ -1,4 +1,5 @@
 import params from "../DBModels/params";
+import {type} from "node:os";
 
 export enum CollectorEndReason {
   TIME = "time",
@@ -11,11 +12,11 @@ export enum CollectorEndReason {
 //a vraiment faire par la suite mais flemme
 export function isParams_t(obj : unknown) : obj is params
 {
-    return true;
+    return obj != null && typeof obj === "object" && "redirectSalonId" in obj;
 }
 
 //a vraiment faire par la suite mais flemme
 export function isListParams_t(obj : unknown) : obj is params[]
 {
-    return true;
+    return obj != null && Array.isArray(obj) && obj.every(v => isParams_t(v));
 }
