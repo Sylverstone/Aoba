@@ -44,9 +44,10 @@ jobs:
           git rm -r --cached .
           rm -r dist/ || true
           rm -r node_modules/ || true
-          rm *.json || true
-          rm *.md || true
+          rm * -v || true
           cp -r ./temp_copy/* ./
+          mv package.prod.json package.prod
+          npm i
           rm -r temp_copy
           git add .
           git commit -m "Sync main"
