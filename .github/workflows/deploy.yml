@@ -42,10 +42,10 @@ jobs:
       - name : Trying
         run : |
           git rm -r --cached .
-          rm -r dist/
+          rm -r dist/ || true
           rm -r node_modules/ || true
-          rm *.json
-          rm *.md
+          rm *.json || true
+          rm *.md || true
           cp temp_copy/ ./ -r
           git add .
           git commit -m "Sync main"
