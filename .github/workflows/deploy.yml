@@ -23,7 +23,7 @@ jobs:
 
       - name: git CONFIG
         run: |
-          git config --global user.name "action"
+          git config --global user.name "sylverstone-action"
           git config --global user.email "e@nomail.com" 
           git config --global --add safe.directory /__w/Aoba/Aoba
 
@@ -37,24 +37,27 @@ jobs:
           cp -r dist/ temp_copy/
           cp package.prod.json temp_copy/
           cp config.json temp_copy/
-          git switch test
+          git switch prod
 
-      - name : Trying
+      - name : Removing current file in production
         run : |
           git rm -r --cached .
           rm -r dist/ || true
           rm -r node_modules/ || true
           rm * -v || true
+
+      - name : Copying temp_copy elements to production
+        run : |
           cp -r ./temp_copy/* ./
           mv package.prod.json package.json
-          npm i
           rm -r temp_copy
+
+      - name : Installing dependencies
+        run : |
+          npm i
+
+      - name : Committing
+        run : |
           git add .
-          git commit -m "Sync main"
+          git commit -m "${{ github.event.head_commit.message }}"
           git push -f
-          
-          
-
-
-
-
