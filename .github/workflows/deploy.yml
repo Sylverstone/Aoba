@@ -46,7 +46,7 @@ jobs:
           rm -r node_modules/ || true
           rm * -v || true
           cp -r ./temp_copy/* ./
-          mv package.prod.json package.prod
+          mv package.prod.json package.json
           npm i
           rm -r temp_copy
           git add .
