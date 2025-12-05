@@ -46,7 +46,7 @@ jobs:
           rm -r node_modules/ || true
           rm *.json || true
           rm *.md || true
-          cp temp_copy/ ./ -r
+          cp temp_copy/ ./* -r
           git add .
           git commit -m "Sync main"
           git push -f
