@@ -36,7 +36,8 @@ jobs:
           mkdir temp_copy
           cp -r dist/ temp_copy/
           cp package.prod.json temp_copy/
-          cp config.json temp_copy/
+          cp settings.json temp_copy/
+          
           git switch prod
 
       - name : Removing current file in production

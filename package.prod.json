@@ -5,7 +5,7 @@
   "main": "dist/main.js",
   "type": "module",
   "scripts": {
-    "start": "node ."
+    "start": "npm i && node ."
   },
   "author": "Sylvio PELAGE MAXIME",
   "license": "ISC",
