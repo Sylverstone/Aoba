@@ -21,9 +21,6 @@ jobs:
         env:
           GITHUB_TOKEN : ${{secrets.PAT}}
 
-      - name : Get RSYNC
-        run : apt install rsync
-
       - name: git CONFIG
         run: |
           git config --global user.name "action"
@@ -49,7 +46,7 @@ jobs:
           rm -r node_modules/ || true
           rm *.json || true
           rm *.md || true
-          rsync -av ./tempCopy/ ./
+          cp -r ./tempCopy/ ./
           git add .
           git commit -m "Sync main"
           git push -f
