@@ -33,14 +33,25 @@ jobs:
 
       - name: Switch to prod
         run : |
+          mkdir temp_copy
+          cp -r dist/ temp_copy/
+          cp package.prod.json temp_copy/
+          cp config.json temp_copy/
           git switch test
 
       - name : Trying
         run : |
-          touch wasThere.txt
+          git rm -r --cached .
+          rm -r dist/
+          rm -r node_modules/ || true
+          rm *.json
+          rm *.md
+          cp temp_copy/ ./ -r
           git add .
-          git commit -m "was there"
-          git push
+          git commit -m "Sync main"
+          git push -f
+          
+          
 
 
 
