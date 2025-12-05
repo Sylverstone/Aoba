@@ -29,7 +29,9 @@ jobs:
 
       - name : Installing Dependencies
         run : |
-          npm i
+          corepack enable
+          corepack prepare
+          pnpm i --frozen-lockfile
 
       - name : Building
         run : |
@@ -50,7 +52,7 @@ jobs:
           cp package.prod.json temp_copy/
           cp settings.json temp_copy/
           
-          git switch prod
+          git switch prod -f
 
       - name : Removing current file in production
         run : |
