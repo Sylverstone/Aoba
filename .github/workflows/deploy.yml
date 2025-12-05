@@ -21,6 +21,9 @@ jobs:
         env:
           GITHUB_TOKEN : ${{secrets.PAT}}
 
+      - name : Get RSYNC
+        run : apt install rsync
+
       - name: git CONFIG
         run: |
           git config --global user.name "action"
