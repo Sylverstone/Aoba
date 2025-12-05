@@ -27,6 +27,14 @@ jobs:
           git config --global user.email "e@nomail.com" 
           git config --global --add safe.directory /__w/Aoba/Aoba
 
+      - name : Building
+        run : |
+          npm run build --if-present
+
+      - name : Testing
+        run : |
+          npm run test --if-present
+
       - name : Fetch prod
         run : |
           git fetch --all
