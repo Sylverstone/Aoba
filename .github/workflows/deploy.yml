@@ -74,5 +74,9 @@ jobs:
       - name : Committing
         run : |
           git add .
-          git commit -m "${{ github.event.head_commit.message }}"
-          git push -f || true
+          if git diff-index --quiet HEAD --; then
+            echo "No changes to commit"
+          else
+            git commit -m "${{ github.event.head_commit.message }}"
+            git push -f || true
+          fi
