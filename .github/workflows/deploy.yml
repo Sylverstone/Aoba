@@ -27,6 +27,10 @@ jobs:
           git config --global user.email "e@nomail.com" 
           git config --global --add safe.directory /__w/Aoba/Aoba
 
+      - name : Installing Dependencies
+        run : |
+          npm i
+
       - name : Building
         run : |
           npm run build --if-present
