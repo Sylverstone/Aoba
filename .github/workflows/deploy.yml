@@ -15,11 +15,16 @@ jobs:
     steps:
       - uses : actions/checkout@v6
         with:
-          node-version : 20
           token: ${{ secrets.PAT }}
           fetch-depth: 0
         env:
           GITHUB_TOKEN : ${{secrets.PAT}}
+
+      - name : setup nodejs
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: 'npm'
 
       - name: git CONFIG
         run: |
@@ -40,6 +45,12 @@ jobs:
       - name : Testing
         run : |
           npm run test --if-present
+
+      - name : Test start
+        run : |
+          npm run start &
+          sleep 7
+          kill -9 $!
 
       - name : Fetch prod
         run : |
