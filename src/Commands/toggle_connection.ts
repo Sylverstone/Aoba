@@ -5,6 +5,7 @@ import {CBot} from "../class/CBot.js";
 import * as fs from "fs";
 import * as path from "path";
 import __dirname from "../dirname.js";
+import ModelParams from "../Models/ModelParams";
 
 
 type CommandData = {
@@ -50,6 +51,7 @@ const Commande : script_t =
             else
             {
                 Json.allowConnection = "non";
+                await ModelParams.closeConnection();
             }
 
             fs.writeFileSync(pathJson, JSON.stringify(Json,null,4));

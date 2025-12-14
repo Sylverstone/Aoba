@@ -6,6 +6,16 @@ import getAllowConnection from "../Utils/getAllowConnection.js";
  * La class gère également la fermeture et ouverture automatique de la connection à mongoDB pour éviter de laisser la connection ouverte. (utile pour le serverless de railway)
  */
 class ModelParams {
+    static async closeConnection() {
+        try {
+            await ModelParams.db.close(true);
+            ModelParams.active = false;
+            return true;
+        }
+        catch (err) {
+            return false;
+        }
+    }
     /**
      * Méthode qui initialise la connection à la base de donnée mongoDB. Elle lance également l'interval qui contrôle la connection la première fois qu'elle est lancé
      * */
@@ -18,10 +28,13 @@ class ModelParams {
         if (!ModelParams.intervalActive) {
             ModelParams.intervalActive = true;
             setInterval(async () => {
+                console.log("[CONNECTION] verification de la connection");
                 if (!ModelParams.active)
                     return;
+                console.log("[CONNECTION] La connection est active");
                 const now = new Date().getTime();
                 const lastUseNow = ModelParams.lastUse.getTime();
+                console.log("[CONNECTION] Cela fait " + (now - lastUseNow) / 1000 + "s qu'elle n'a pas été utilisé");
                 if (now - lastUseNow >= 2 * 1000 * 60) {
                     ModelParams.active = false;
                     await ModelParams.db.close(true);
@@ -37,9 +50,6 @@ class ModelParams {
      * @return true si ce message n'est pas déjà suivie par le bot, false sinon
      * */
     static async doMessageAlreadyHaveRedirection(messageId, guildId) {
-        // const db = new DB(process.env.DB_URL ?? "");
-        // await db.connect();
-        // const collections = db.getCollections();
         if (getAllowConnection() != "oui") {
             return null;
         }

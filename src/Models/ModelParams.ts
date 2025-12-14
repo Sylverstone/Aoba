@@ -18,6 +18,20 @@ export default class ModelParams
     private static intervalActive : boolean = false;
     private static timeInterval : number = 1 * 1000 * 60;
 
+
+    public static async closeConnection()
+    {
+        try {
+            await ModelParams.db.close(true);
+            ModelParams.active = false;
+            return true;
+        }
+        catch(err)
+        {
+            return false;
+        }
+    }
+
     /**
      * Méthode qui initialise la connection à la base de donnée mongoDB. Elle lance également l'interval qui contrôle la connection la première fois qu'elle est lancé
      * */
@@ -34,17 +48,20 @@ export default class ModelParams
         {
             ModelParams.intervalActive = true;
             setInterval(async() => {
+                console.log("[CONNECTION] verification de la connection");
                 if(!ModelParams.active)
                     return;
 
+                console.log("[CONNECTION] La connection est active");
                 const now = new Date().getTime();
                 const lastUseNow = ModelParams.lastUse.getTime();
+
+                console.log("[CONNECTION] Cela fait " + (now - lastUseNow) / 1000 + "s qu'elle n'a pas été utilisé");
                 if(now - lastUseNow >= 2 * 1000 * 60)
                 {
                     ModelParams.active = false;
                     await ModelParams.db.close(true);
                     console.log("[DB] La connection à la base de donnée a été fermé.");
-
                 }
             },ModelParams.timeInterval);
         }
@@ -58,9 +75,6 @@ export default class ModelParams
      * */
     public static async doMessageAlreadyHaveRedirection(messageId : string, guildId : string)
     {
-        // const db = new DB(process.env.DB_URL ?? "");
-        // await db.connect();
-        // const collections = db.getCollections();
         if(getAllowConnection() != "oui")
         {
             return null;
