@@ -5,7 +5,7 @@ import {CBot} from "../class/CBot.js";
 import * as fs from "fs";
 import * as path from "path";
 import __dirname from "../dirname.js";
-import ModelParams from "../Models/ModelParams";
+import ModelParams from "../Models/ModelParams.js";
 
 
 type CommandData = {
