@@ -3,7 +3,7 @@ import { CommandType_t } from "../Loaders/LoadCommands.js";
 import * as fs from "fs";
 import * as path from "path";
 import __dirname from "../dirname.js";
-import ModelParams from "../Models/ModelParams";
+import ModelParams from "../Models/ModelParams.js";
 const Commande = {
     name: "toggle_connection",
     description: "hello",
