@@ -15,16 +15,11 @@ jobs:
     steps:
       - uses : actions/checkout@v6
         with:
+          node-version: 20
           token: ${{ secrets.PAT }}
           fetch-depth: 0
         env:
           GITHUB_TOKEN : ${{secrets.PAT}}
-
-      - name : setup nodejs
-        uses: actions/setup-node@v6
-        with:
-          node-version: 20
-          cache: 'pnpm'
 
       - name: git CONFIG
         run: |
