@@ -5,6 +5,14 @@ on :
     branches:
       - main
 
+env:
+  TOKEN: ${{secrets.TOKEN}}
+  GUILDID: ${{secrets.GUILDID}}
+  CLIENTID: ${{secrets.CLIENTID}}
+  IDOwner: ${{secrets.IDOwner}}
+  DB_URL: ${{secrets.DB_URL}}
+  Prod: ${{secrets.Prod}}
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
