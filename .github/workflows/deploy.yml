@@ -83,6 +83,12 @@ jobs:
               run : |
                   npm i
 
+            - name : Test Start
+              run : |
+                  npm run start &
+                  sleep 7
+                  kill -9 $!
+
             - name : Committing
               run : |
                   git add .
