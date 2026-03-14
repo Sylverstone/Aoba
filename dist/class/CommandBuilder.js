@@ -26,21 +26,39 @@ const MyCommandToApplicationCommand_t = (t) => {
  * Class permettant de créer des commandes, que ce soit des SlashCommand, UserCommand, ou MessageCommand
  * */
 export default class CommandBuilder {
+    getCommand() {
+        return this.command;
+    }
     constructor(name, desc, type) {
         this.command = {
             name: "",
             description: "",
             type: CommandType_t.MESSAGE_COMMAND
         };
+        this.customCommandHandler = false;
         this.command.name = name;
         this.command.description = desc;
         this.command.type = type;
+    }
+    static InstanceFromOtherCommandBuilder(other) {
+        const _new = new CommandBuilder(other.getCommand().name, other.getCommand().description, other.getCommand().type);
+        const memberPerm = other.getCommand().default_member_permissions;
+        if (memberPerm)
+            _new.setDefaultMemberPermission(memberPerm);
+        const options = other.getCommand().options;
+        if (options)
+            _new.setOptions([...options]);
+        _new.customCommandHandler = other.customCommandHandler;
+        return _new;
     }
     setDefaultMemberPermission(defaultMemberPermission) {
         this.command.default_member_permissions = defaultMemberPermission;
     }
     setOptions(options) {
         this.command.options = options;
+    }
+    pushOptions(options) {
+        this.command.options?.push(...options);
     }
     toJSON() {
         return {
