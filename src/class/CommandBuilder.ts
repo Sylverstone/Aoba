@@ -66,10 +66,29 @@ export default class CommandBuilder {
         type : CommandType_t.MESSAGE_COMMAND
     };
 
+    public getCommand() : userCommand_t {
+        return this.command;
+    }
+
+    customCommandHandler = false;
+
     public constructor(name : string, desc : string, type : CommandType_t ) {
         this.command.name = name;
         this.command.description = desc;
         this.command.type = type;
+    }
+
+    public static InstanceFromOtherCommandBuilder(other : CommandBuilder): CommandBuilder {
+        const _new = new CommandBuilder(other.getCommand().name,other.getCommand().description,other.getCommand().type);
+
+        const memberPerm = other.getCommand().default_member_permissions;
+        if(memberPerm)
+            _new.setDefaultMemberPermission(memberPerm)
+        const options = other.getCommand().options;
+        if(options)
+            _new.setOptions([...options]);
+        _new.customCommandHandler = other.customCommandHandler;
+        return _new;
     }
 
     public setDefaultMemberPermission(defaultMemberPermission : string) : void {
@@ -78,6 +97,10 @@ export default class CommandBuilder {
 
     public setOptions (options : option_t[]) : void {
         this.command.options = options;
+    }
+
+    public pushOptions(options : option_t[]) : void {
+        this.command.options?.push(...options);
     }
 
    public toJSON() : RESTPostAPIApplicationCommandsJSONBody

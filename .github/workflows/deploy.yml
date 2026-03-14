@@ -1,96 +1,94 @@
 name : "Deploy project"
 
 on :
-  push:
-    branches:
-      - main
+    push:
+        branches:
+            - pre-prod
 
 env:
-  TOKEN: ${{secrets.TOKEN}}
-  GUILDID: ${{secrets.GUILDID}}
-  CLIENTID: ${{secrets.CLIENTID}}
-  IDOwner: ${{secrets.IDOwner}}
-  DB_URL: ${{secrets.DB_URL}}
-  Prod: ${{secrets.Prod}}
+    TOKEN: ${{secrets.TOKEN}}
+    GUILDID: ${{secrets.GUILDID}}
+    CLIENTID: ${{secrets.CLIENTID}}
+    IDOwner: ${{secrets.IDOwner}}
+    DB_URL: ${{secrets.DB_URL}}
+    Prod: ${{secrets.Prod}}
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    container:
-      image: node:20
-    permissions:
-      contents: write
-    steps:
-      - uses : actions/checkout@v6
-        with:
-          node-version: 20
-          token: ${{ secrets.PAT }}
-          fetch-depth: 0
-        env:
-          GITHUB_TOKEN : ${{secrets.PAT}}
+    deploy:
+        runs-on: ubuntu-latest
+        container:
+            image: node:20
+        permissions:
+            contents: write
+        steps:
+            - uses : actions/checkout@v6
+              with:
+                  node-version: 20
+                  token: ${{ secrets.PAT }}
+                  fetch-depth: 0
+              env:
+                  GITHUB_TOKEN : ${{secrets.PAT}}
 
-      - name: git CONFIG
-        run: |
-          git config --global user.name "sylverstone-action"
-          git config --global user.email "e@nomail.com" 
-          git config --global --add safe.directory /__w/Aoba/Aoba
+            - name: git CONFIG
+              run: |
+                  git config --global user.name "sylverstone-action"
+                  git config --global user.email "e@nomail.com" 
+                  git config --global --add safe.directory /__w/Aoba/Aoba
 
-      - name : Installing Dependencies
-        run : |
-          corepack enable
-          corepack prepare
-          pnpm i --frozen-lockfile
+            - name : Installing Dependencies
+              run : |
+                  corepack enable
+                  corepack prepare
+                  pnpm i --frozen-lockfile
 
-      - name : Building
-        run : |
-          npm run build --if-present
+            - name : Building
+              run : |
+                  npm run build --if-present
 
-      - name : Testing
-        run : |
-          npm run test --if-present
+            - name : Testing
+              run : |
+                  npm run test --if-present
 
-      - name : Test start
-        run : |
-          npm run start &
-          sleep 7
-          kill -9 $!
+            - name : Test start
+              run : |
+                  npm run start &
+                  sleep 7
+                  kill -9 $!
 
-      - name : Fetch prod
-        run : |
-          git fetch --all
+            - name : Fetch prod
+              run : |
+                  git fetch --all
 
-      - name: Switch to prod
-        run : |
-          mkdir temp_copy
-          cp -r dist/ temp_copy/
-          cp package.prod.json temp_copy/
-          cp settings.json temp_copy/
-          
-          git switch prod -f
+            - name: Switch to prod
+              run : |
+                  mkdir temp_copy
+                  cp -r dist/ temp_copy/
+                  cp package.prod.json temp_copy/
+                  cp settings.json temp_copy/
+                  
+                  git switch prod -f
 
-      - name : Removing current file in production
-        run : |
-          git rm -r --cached .
-          rm -r dist/ || true
-          rm -r node_modules/ || true
-          rm * -v || true
+            - name : Removing current file in production
+              run : |
+                  rm -r dist/ || true
+                  rm -r node_modules/ || true
 
-      - name : Copying temp_copy elements to production
-        run : |
-          cp -r ./temp_copy/* ./
-          mv package.prod.json package.json
-          rm -r temp_copy
+            - name : Copying temp_copy elements to production
+              run : |
+                  cp -r ./temp_copy/* ./
+                  mv package.prod.json package.json
+                  rm -r temp_copy
 
-      - name : Installing dependencies
-        run : |
-          npm i
+            - name : Installing dependencies
+              run : |
+                  npm i
 
-      - name : Committing
-        run : |
-          git add .
-          if git diff-index --quiet HEAD --; then
-            echo "No changes to commit"
-          else
-            git commit -m "${{ github.event.head_commit.message }}"
-            git push -f || true
-          fi
+            - name : Committing
+              run : |
+                  git add .
+                  if git diff-index --quiet HEAD --; then
+                    echo "No changes to commit"
+                  else
+                    git commit -m "${{ github.event.head_commit.message }}"
+                    git push -f || true
+                  fi

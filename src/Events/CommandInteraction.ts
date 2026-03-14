@@ -2,8 +2,6 @@ import {
     ButtonInteraction,
     CommandInteraction,
     Events,
-    MessageFlags,
-    TextChannel,
 } from "discord.js"
 import * as path from "path";
 import { pathToFileURL } from "url";
@@ -11,6 +9,8 @@ import __dirname from "../dirname.js";
 import {CBot} from "../class/CBot.js";
 import { script_t } from "../config/types.js";
 import { getFile } from "../Loaders/LoadCommands.js";
+import ModelCustomCommand from "../Models/ModelCustomCommand.js";
+import Utils from "../class/Utils.js";
 
 
 const name = Events.InteractionCreate;
@@ -27,6 +27,7 @@ const exec = async (bot : CBot, interaction : CommandInteraction | ButtonInterac
 
     const commandName = interaction.commandName;
     const filePath = pathToFileURL(path.join(__dirname,"Commands",commandName + ".js"));
+
     const command : script_t = await getFile(filePath.href);
 
     const { run, autocomplete } = command;

@@ -1,12 +1,14 @@
-import { readdirSync } from "fs";
-import  * as path from "path";
-import {REST, Routes, SlashCommandBuilder} from "discord.js";
+import {existsSync, readFile} from "fs";
+import * as path from "path";
+import {ApplicationCommandOptionType, REST, Routes, SlashCommandBuilder} from "discord.js";
 import __dirname from "../dirname.js";
-import { pathToFileURL } from "url";
 import {CBot} from "../class/CBot.js";
 import "dotenv/config"
-import { script_t } from "../config/types.js";
+import {IsCustomCommand_t, IsCustomCommandJson_t, script_t} from "../config/types.js";
 import CommandBuilder from "../class/CommandBuilder.js";
+import ModelCustomCommand from "../Models/ModelCustomCommand.js";
+import Utils from "../class/Utils.js";
+import * as fs from "fs";
 
 
 export const getFile = async(fileUrl : string) : Promise<script_t> =>
@@ -38,10 +40,12 @@ interface option_t
     max_value? : number,
     min_value? : number,
     autocomplete? : boolean,
+    max_length? : number,
+    min_length? : number,
 }
 
 
-const setupLoad = async (bot : CBot, guildIds : string[]) =>
+const setupLoad = async (bot : CBot, guildIds : string[][]) =>
 {
 
     let Commands : Array<CommandBuilder> = [];
@@ -51,7 +55,7 @@ const setupLoad = async (bot : CBot, guildIds : string[]) =>
         const desc = commande.typeCommand === CommandType_t.CHAT_INPUT ? commande.description : "";
         //creation de la slash commande
 
-        let command = new CommandBuilder(
+        let commandBuilder = new CommandBuilder(
             commande.name,
             desc,
             commande.typeCommand
@@ -95,7 +99,9 @@ const setupLoad = async (bot : CBot, guildIds : string[]) =>
                             name : c.name,
                             value : c.value
                         }
-                    })
+                    }),
+                    max_length : option.max_length,
+                    min_length : option.min_length,
                 })
             }
         
@@ -110,13 +116,71 @@ const setupLoad = async (bot : CBot, guildIds : string[]) =>
                 })
             }
 
+        if(commande.optionBoolean)
+            for(const option of commande.optionBoolean)
+            {
+                options.push({
+                    description : option.description,
+                    name : option.name,
+                    type : option.type,
+                    required : option.required,
+                })
+            }
+
+        if(commande.customCommandHandler)
+            commandBuilder.customCommandHandler = true;
+
         if(commande.admin){
-            command.setDefaultMemberPermission("0");
+            commandBuilder.setDefaultMemberPermission("0");
         }
 
 
-        command.setOptions(options);
-        Commands.push(command);
+        commandBuilder.setOptions(options);
+        Commands.push(commandBuilder);
+    }
+
+    const GuildCommandsMap = new Map<string,CommandBuilder[]>();
+
+    for(const [id] of guildIds)
+    {
+        const CopyCommands : CommandBuilder[] = [];
+        for(const c of Commands)
+        {
+            CopyCommands.push(CommandBuilder.InstanceFromOtherCommandBuilder(c));
+        }
+        GuildCommandsMap.set(id,CopyCommands);
+    }
+
+    for(let [id, C] of GuildCommandsMap)
+    {
+        let guildName = guildIds.find(l => l.includes(id));
+
+        console.log(guildName);
+        const CustomCommandBuilder = C.find(c => c.customCommandHandler);
+
+        console.log(CustomCommandBuilder);
+        console.log(typeof CustomCommandBuilder);
+
+        if(!CustomCommandBuilder)
+            continue;
+
+
+        if(!guildName)
+            continue;
+
+        const customCommands = await GetGuildCustomCommands(bot,id,guildName[1]);
+
+        if(!customCommands)
+        {
+            C = C.filter(f => f !== CustomCommandBuilder);
+            GuildCommandsMap.set(id,C);
+            continue;
+        }
+
+        C = C.filter(commandBuilder => commandBuilder !== CustomCommandBuilder);
+        CustomCommandBuilder.pushOptions(customCommands);
+        C.push(CustomCommandBuilder);
+        GuildCommandsMap.set(id,C);
     }
 
     if(!(typeof process.env.TOKEN === 'string')) return;
@@ -130,14 +194,24 @@ const setupLoad = async (bot : CBot, guildIds : string[]) =>
             console.log(`Started refreshing ${Commands.length} application (/) SlashCommands.`);
             //permet au slash commande d'être visible sur le serveur
             console.log("guilds of bots :", guildIds);
+
+
+            // const customCommandModel = new ModelCustomCommand();
+            // await customCommandModel.connect();
+
             //load commands for every guild
-            for(const guildId of guildIds)
+            for(const [guildId, guildName] of guildIds)
             {
+                console.log("iter");
+
                 await rest.put(
                     Routes.applicationGuildCommands(clientId, guildId),
-                    { body: Commands },
+                    { body: GuildCommandsMap.get(guildId) },
                 );
             }
+
+            // await customCommandModel.close();
+
             console.log(`Successfully reloaded ${bot.commands.size} application (/) SlashCommands.`);
         }catch (error) {
             console.error("[ERROR] error while loading SlashCommands\n", error);
@@ -148,13 +222,93 @@ const setupLoad = async (bot : CBot, guildIds : string[]) =>
 
 export const loadCommandsOnServer = async (bot : CBot, guildId : string) =>
 {
-    const guildIds = [guildId];
+    await bot.guilds.fetch();
+    const guild = bot.guilds.cache.find(g => g.id === guildId);
+    if(!guild)
+        return;
+    const guildIds = [[guildId, guild.name]];
     await setupLoad(bot, guildIds);
 }
 
 export const loadCommandsOnAllServers = async (bot : CBot)=>
 {
     await bot.guilds.fetch();
-    const guildIds = bot.guilds.cache.map(guild => guild.id);
+    const guildIds = bot.guilds.cache.map(guild => [guild.id, guild.name]);
     await setupLoad(bot,guildIds);
+}
+
+export const addCommand = async(bot : CBot, guildId : string, commandName : string, commandDescription : string) =>{
+
+    let command = new CommandBuilder(
+        commandName,
+        commandDescription,
+        CommandType_t.CHAT_INPUT
+    );
+
+    const clientId : string | undefined = bot.getID();
+    if(!(typeof clientId === 'string')) return;
+    const rest = new REST().setToken(bot.getToken());
+
+    await (async () => {
+            try {
+                await rest.put(
+                    Routes.applicationGuildCommands(clientId, guildId),
+                    {body: [command]},
+                );
+            }
+            catch (error) {
+                console.error("[ERROR] error while loading SlashCommands\n", error);
+            }
+        }
+    )();
+}
+
+export const GetGuildCustomCommands = async(bot : CBot, guildId : string, guildName : string) =>{
+
+    const JSONDataFilePath = path.join(__dirname,"..","data",Utils.GenerateCollectionName(guildId,guildName) + ".json");
+
+    if(!fs.existsSync(JSONDataFilePath))
+    {
+        console.log(`${JSONDataFilePath} n'existe pas !)`);
+        return null;
+    }
+
+    const JSONData = JSON.parse(fs.readFileSync(JSONDataFilePath).toString());
+
+    if(!IsCustomCommandJson_t(JSONData))
+        return null;
+
+
+    const guildCustomCommands = JSONData.commands;
+
+    const options : option_t[] = [];
+    for(const commands of guildCustomCommands)
+    {
+        const {name,description} = commands;
+        options.push({
+            name : name,
+            type : ApplicationCommandOptionType.Subcommand,
+            description : description,
+        })
+    }
+
+    //command.setOptions(options);
+    return options;
+
+    // const clientId : string | undefined = bot.getID();
+    // if(!(typeof clientId === 'string')) return;
+    // const rest = new REST().setToken(bot.getToken());
+    //
+    // await (async () => {
+    //         try {
+    //             await rest.put(
+    //                 Routes.applicationGuildCommands(clientId, guildId),
+    //                 {body: [command]},
+    //             );
+    //         }
+    //         catch (error) {
+    //             console.error("[ERROR] error while loading SlashCommands\n", error);
+    //         }
+    //     }
+    // )();
 }
